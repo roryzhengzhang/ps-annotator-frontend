@@ -14,8 +14,10 @@ import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Paper from '@mui/material/Paper';
+import IndividualRuleTable from './IndividualRuleTable';
+import Grid from '@mui/material/Grid';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchElements, fetchCategories, updateCurCategory } from './DataSlice.jsx';
+import { fetchElements, fetchCategories, updateCurCategory, clearAnnotation } from './DataSlice.jsx';
 import InputBase from '@mui/material/InputBase';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -30,10 +32,12 @@ import Element from "./Element"
 import CardContent from '@mui/material/CardContent';
 import FormHelperText from '@mui/material/FormHelperText';
 import FormControl from '@mui/material/FormControl';
+import { useState } from 'react';
 import Select from '@mui/material/Select';
 import ListItemButton from '@mui/material/ListItemButton';
 import Accordion from '@mui/material/Accordion';
 import ListItemIcon from '@mui/material/ListItemIcon';
+import CombinedRuleTable from './CombinedRuleTable';
 import { makeStyles } from '@mui/styles';
 import SearchIcon from '@mui/icons-material/Search';
 import { PieChart } from 'react-minimal-pie-chart';
@@ -227,7 +231,7 @@ function WorkspaceSelectFormControl() {
       // value={age}
       // onChange={handleChange}
       >
-        <MenuItem value={10}>fairytale-bias-val-split</MenuItem>
+        <MenuItem value={10}>price</MenuItem>
         <MenuItem value={20}>wiki_animals</MenuItem>
         <MenuItem value={30}>storybook-bias</MenuItem>
       </Select>
@@ -258,20 +262,17 @@ function CategoryFormControl(props) {
 
   const workspace = useSelector(state => state.workspace)
   const dispatch = useDispatch()
+  const [selectValue, setSelectValue] = useState()
 
   return (
     <FormControl sx={{ marginTop: 1, minWidth: 150, padding: 2 }}>
       <Select
         id="label-select"
         sx={{ height: 30 }}
-        value={workspace.curCategory}
-        onChange={(e) => dispatch(updateCurCategory(e.target.value))}
+        value={selectValue}
+      // onChange={(e) => dispatch(updateCurCategory(e.target.value))}
       >
-        {
-          workspace.categories.map((e) => {
-            return (<MenuItem value={e.id}>{e.category_name}</MenuItem>)
-          })
-        }
+        <MenuItem value="price">Price</MenuItem>
       </Select>
       {/* <FormHelperText>With label + helper text</FormHelperText> */}
     </FormControl>
@@ -364,18 +365,11 @@ function Workspace() {
   const dispatch = useDispatch();
 
   React.useEffect(() => {
-    dispatch(fetchElements()).then(() => dispatch(fetchCategories()))
+    dispatch(clearAnnotation()).then(() => dispatch(fetchElements()))
   }, [])
 
   const handleSearch = () => {
-    // const elements = workspace.elements
-    const elements = [
-      "This assignment satisfies learning objective 3 (LO3) as specified in the syllabus. You will apply the interaction theories, design principles, design methods",
-      "Please read chapters 1, 3, and 4 of the Klimczak book before attempting to work on this aspect of your project",
-      "Also useful are the readings/notes on Needfinding, Personas, Scenario-Based Design, and the MethodsCards",
-      "Synthesize what you have learned in Week 1 into at least one persona for your key stakeholder(s)",
-      "Please read chapters 1, 3, and 4 of the Klimczak book before attempting to work on this aspect of your project"
-    ]
+    const elements = workspace.elements
     console.log(`searching`)
     setSearchResult([])
     var results = []
@@ -392,148 +386,13 @@ function Workspace() {
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
 
-      <Box>
-        <Drawer
-          sx={{
-            width: drawerWidth,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              boxSizing: 'border-box',
-            },
-          }}
-          variant="permanent"
-          // open={open}
-          anchor="left">
-          <DrawerHeader>
-            <Typography variant="h6" component="div">
-              Sleuth
-            </Typography>
-            <IconButton>
-              <LogoutIcon />
-            </IconButton>
-          </DrawerHeader>
-          <Divider />
-          <Stack>
-            <AccountInfo>
-              <Box sx={{ flexDirection: 'column' }}>
-                <Typography sx={{ fontSize: 20 }}>
-                  Jack
-                </Typography>
-                <Typography sx={{ fontSize: 15 }}>
-                  jack@gmail.com
-                </Typography>
-              </Box>
-            </AccountInfo>
-            <WorkspaceSelect>
-              <Typography>Workspace:</Typography>
-              <WorkspaceSelectFormControl />
-            </WorkspaceSelect>
-            <Divider />
-            <StackBarContainer>
-              {/* <PieChart
-              data={[
-                { title: 'Postitive', value: 50, color: '#90e0ef' },
-                { title: 'Negative', value: 20, color: '#ff758f' },
-                { title: 'Unlabeled', value: 20, color: '#f9f7f3' },
-              ]}
-              label={({ dataEntry }) => `${Math.round(dataEntry.percentage)} %`}
-              labelStyle={{ fontSize: 9 }}
-              animate={true}
-            /> */}
-              <HSBar
-                // showTextIn
-                data={[
-                  { value: 100 * (numLabel['pos'] / (1.0 * 131)), color: "#99d98c" },
-                  { value: 100 * (numLabel['neg'] / (1.0 * 131)), color: "#ff758f" },
-                  { value: 10, color: "#f9f7f3" }]} />
-            </StackBarContainer>
-            <Stack spacing={0} sx={{ marginBottom: 2 }}>
-              <ClassContainer>
-                <Typography><strong>Positive</strong></Typography>
-                <Typography><strong>{numLabel['pos']}</strong></Typography>
-              </ClassContainer>
-              <ClassContainer>
-                <Typography><strong>Negative</strong></Typography>
-                <Typography><strong>{numLabel['neg']}</strong></Typography>
-              </ClassContainer>
-              <ClassContainer>
-                <Typography><strong>Total</strong></Typography>
-                <Typography><strong>{workspace.elements.length}</strong></Typography>
-              </ClassContainer>
-            </Stack>
-            <Divider />
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 2 }}>
-              <Typography><strong>Model information</strong></Typography>
-            </Box>
-            <ModelName>
-              <Typography>Current classifier:</Typography>
-              <Typography>v.2 model</Typography>
-            </ModelName>
-            <ModelFormControl />
-            <Divider />
-            {/* <Box sx={{ marginTop: 2, marginBottom: 2 }}>
-              <Typography sx={{ textAlign: "center" }}><strong>Dataset information</strong></Typography>
-              <ClassContainer sx={{ marginTop: 2 }}>
-                <Typography><strong>Total instance</strong></Typography>
-                <Typography><strong>32</strong></Typography>
-              </ClassContainer>
-              <ClassContainer>
-                <Typography><strong>Positive</strong></Typography>
-                <Typography><strong>24</strong></Typography>
-              </ClassContainer>
-              <ClassContainer>
-                <Typography><strong>Negative</strong></Typography>
-                <Typography><strong>8</strong></Typography>
-              </ClassContainer>
-            </Box> */}
-            <Box>
-              <Accordion sx={{ backgroundColor: "grey" }}>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panel1a-content"
-                  id="panel1a-header"
-                >
-                  <Typography>History</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  {/* <HistoryText>
-                  <Typography sx={{ whiteSpace: "normal" }} paragraph>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-                    tempor incididunt ut labore et dolore magna aliqua.
-                  </Typography>
-                </HistoryText> */}
-                  <Card>
-                    <CardContent>
-                      <Typography sx={{ whiteSpace: "normal" }} paragraph>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-                        tempor incididunt ut labore et dolore magna aliqua.
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </AccordionDetails>
-              </Accordion>
-            </Box>
-          </Stack>
-        </Drawer>
-      </Box>
-
-      <Box component="main" sx={{ flexGrow: 1, p: 3, width: `calc(100% - ${drawerWidth}px)` }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <WorkspaceHeader>
           <Box sx={{ display: "flex", flexDirection: "row", alignItems: 'center', justifyContent: 'space-between', }}>
             <Typography><strong>Label:</strong></Typography>
             <CategoryFormControl />
           </Box>
           <ToolBar>
-            <ButtonGroup variant="contained" aria-label="split button" sx={{ mr: 2 }}>
-              <Button >Next to label (2/20)</Button>
-              <Button>
-                <ArrowDropUpIcon />
-              </Button>
-              <Button>
-                <ArrowDropDownIcon />
-              </Button>
-            </ButtonGroup>
             <IconButton onClick={handleDrawerOpen}>
               <SearchIcon />
             </IconButton>
@@ -543,32 +402,46 @@ function Workspace() {
           <IconButton>
             <ChevronLeftIcon />
           </IconButton>
-          <Typography sx={{ fontSize: 20 }}>
+          <Typography sx={{ fontSize: 30 }}>
             <strong>
-              storybook_sentence_val_split-assipattle_and_the_mester_stoorworm
+              YELP RESTURANT REVIEW
             </strong>
           </Typography>
           <IconButton>
             <ChevronRightIcon />
           </IconButton>
         </TitleBar>
-        <Box>
-          {
-            workspace.ready ? workspace['elements'].map((element, index) => {
-              const len_elements = workspace['elements'].length
-              return (<Element keyEventHandler={(e) => handleKeyEvent(e, len_elements)} focusedState={focusedState} id={index} numLabel={numLabel} numLabelHandler={setNumLabel} clickEventHandler={handleClick} element_id={element['id']} text={element['text']} labeledState={labeledState} LabelStateHandler={setLabeledState} />)
-            }) :
-              <CircularProgress color="secondary" />
-          }
-        </Box>
         {/* Temporary */}
-        <Box>
-          <Element keyEventHandler={(e) => handleKeyEvent(e, 5)} focusedState={focusedState} id={0} numLabel={numLabel} numLabelHandler={setNumLabel} clickEventHandler={handleClick} element_id="id1" text="This assignment satisfies learning objective 3 (LO3) as specified in the syllabus. You will apply the interaction theories, design principles, design methods" labeledState={labeledState} LabelStateHandler={setLabeledState} />
-          <Element keyEventHandler={(e) => handleKeyEvent(e, 5)} focusedState={focusedState} id={1} numLabel={numLabel} numLabelHandler={setNumLabel} clickEventHandler={handleClick} element_id="id2" text="Please read chapters 1, 3, and 4 of the Klimczak book before attempting to work on this aspect of your project." labeledState={labeledState} LabelStateHandler={setLabeledState} />
-          <Element keyEventHandler={(e) => handleKeyEvent(e, 5)} focusedState={focusedState} id={2} numLabel={numLabel} numLabelHandler={setNumLabel} clickEventHandler={handleClick} element_id="id3" text="Also useful are the readings/notes on Needfinding, Personas, Scenario-Based Design, and the MethodsCards." labeledState={labeledState} LabelStateHandler={setLabeledState} />
-          <Element keyEventHandler={(e) => handleKeyEvent(e, 5)} focusedState={focusedState} id={3} numLabel={numLabel} numLabelHandler={setNumLabel} clickEventHandler={handleClick} element_id="id4" text="Synthesize what you have learned in Week 1 into at least one persona for your key stakeholder(s)." labeledState={labeledState} LabelStateHandler={setLabeledState} />
-          <Element keyEventHandler={(e) => handleKeyEvent(e, 5)} focusedState={focusedState} id={4} numLabel={numLabel} numLabelHandler={setNumLabel} clickEventHandler={handleClick} element_id="id5" text="Note that “log-in functionality” is a trivial task for a mobile app or website, whereas “pointing” or “following along” during co-reading is a non-trivial task." labeledState={labeledState} LabelStateHandler={setLabeledState} />
-        </Box>
+        <Grid container spacing={2}>
+          <Grid item md={6}>
+            <Box>
+              <Typography sx={{ textAlign: "center", marginBottom: 2, fontSize: 20 }}><strong>Text Data</strong></Typography>
+              {
+                workspace.elements.map((element, index) => {
+
+                  return (<Element predictScore={ workspace['scores'] != null  ? workspace['scores'][index] : 0} keyEventHandler={(e) => handleKeyEvent(e, index)} focusedState={focusedState} id={index} numLabel={numLabel} numLabelHandler={setNumLabel} clickEventHandler={handleClick} element_id={element['id']} text={element['example']} labeledState={labeledState} LabelStateHandler={setLabeledState} />)
+                })
+              }
+            </Box>
+          </Grid>
+          <Grid item md={6}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', flexDirection: 'column' }}>
+              <Typography sx={{ fontSize: 30, textAlign: 'center', marginBottom: 5 }}>
+                Combined patterns
+              </Typography>
+              <CombinedRuleTable  />
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', marginTop: 5 }}>
+              <Typography sx={{ fontSize: 30, textAlign: 'center', marginBottom: 5}}>
+                Individual patterns
+              </Typography>
+              <IndividualRuleTable />
+            </Box>
+
+          </Grid>
+        </Grid>
+
 
         <Drawer
           sx={{
@@ -615,22 +488,6 @@ function Workspace() {
               )
             })
           }
-
-          {/* <SearchPanel>
-            <Typography>
-              Cras tincidunt lobortis feugiat vivamus at augue. At augue eget arcu dictum varius duis at
-              consectetur lorem. Velit sed ullamcorper morbi tincidunt. Lorem donec massa
-              sapien faucibus et molestie ac.
-            </Typography>
-          </SearchPanel>
-
-          <SearchPanel>
-            <Typography>
-              Cras tincidunt lobortis feugiat vivamus at augue. At augue eget arcu dictum varius duis at
-              consectetur lorem. Velit sed ullamcorper morbi tincidunt. Lorem donec massa
-              sapien faucibus et molestie ac.
-            </Typography>
-          </SearchPanel> */}
         </Drawer>
       </Box>
 

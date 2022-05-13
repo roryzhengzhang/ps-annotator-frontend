@@ -4,7 +4,7 @@ import Stack from '@mui/material/Stack';
 import { IconButton } from "@mui/material";
 import CheckIcon from '@mui/icons-material/Check';
 import { useDispatch, useSelector } from 'react-redux';
-import { setElementLabel } from '../DataSlice'
+import { setLabel, fetchIndividualRules, fetchCombinedRules } from '../DataSlice'
 import CloseIcon from '@mui/icons-material/Close';
 import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 import { styled, useTheme } from '@mui/material/styles';
@@ -16,8 +16,13 @@ const Line = styled(Box)((props) => ({
         border: "thin solid",
         borderColor: "#f48c06"
     }),
+    ...(
+        props.predictScore > 0.5 && {
+            backgroundColor: 'rgba(0, 128, 0, 0.2)'
+    }),
     outline: "None",
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'center',
     paddingLeft: 5,
     paddingTop: 3,
@@ -38,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Sentence(props) {
 
-    const { keyEventHandler, focusedState, id, numLabel, numLabelHandler, clickEventHandler, text, label, labeledState, LabelStateHandler, element_id } = props
+    const { keyEventHandler, focusedState, id, predictScore, numLabel, numLabelHandler, clickEventHandler, text, label, labeledState, LabelStateHandler, element_id } = props
 
     const dispatch = useDispatch()
 
@@ -47,7 +52,7 @@ export default function Sentence(props) {
     const classes = useStyles()
 
     return (
-        <Line tabIndex="-1" onKeyDown={keyEventHandler} focused={focusedState['L' + id]} id={"L" + id} onClick={(e) => clickEventHandler(e, id)}>
+        <Line tabIndex="-1" predictScore={predictScore} onKeyDown={keyEventHandler} focused={focusedState['L' + id]} id={"L" + id} onClick={(e) => clickEventHandler(e, id)}>
             {focusedState['L' + id] == true &&
                 <Stack direction="row" spacing={0} sx={{ justifyContent: "flex-end" }}>
                     <IconButton onClick={() => {
@@ -59,9 +64,14 @@ export default function Sentence(props) {
                             numLabelHandler({...numLabel, "pos": numLabel['pos']+1})
                            }
                         }
+
                         newState['L' + id] = "pos"
                         LabelStateHandler(newState)
-                        dispatch(setElementLabel({ element_id: element_id, label: true }))
+                        dispatch(setLabel({ element_id: element_id, label: 1 })).then(res => {
+                            dispatch(fetchIndividualRules()).then( () => {
+                                dispatch(fetchCombinedRules())
+                            })
+                        })
                     }}>
                         <CheckIcon className={classes.checkicon} />
                     </IconButton>
@@ -76,6 +86,11 @@ export default function Sentence(props) {
                          }
                         newState['L' + id] = "neg"
                         LabelStateHandler(newState)
+                        dispatch(setLabel({ element_id: element_id, label: 0 })).then(res => {
+                            dispatch(fetchIndividualRules()).then(() => {
+                                dispatch(fetchCombinedRules())
+                            })
+                        })
                     }}>
                         <CloseIcon className={classes.crossicon} />
                     </IconButton>
